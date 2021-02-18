@@ -61,3 +61,5 @@ Friday Feb 26 - Finish robot arm manipulation; robot can consistently pick up an
 Sunday, Feb 28 - Successfully implement all 3 sections of code together.
 
 Monday, March 1- submit project
+
+testing
