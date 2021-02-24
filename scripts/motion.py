@@ -14,6 +14,7 @@ from q_learning_project.msg import RobotMoveDBToBlock
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 #STEPS for ease of copy pasting
+#testing 
 
 # roscore
 # roslaunch q_learning_project turtlebot3_intro_robo_manipulation.launch
