@@ -9,7 +9,7 @@ from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from q_learning_project.msg import RobotMoveDBToBlock
 
-#from object_recognizer import ObjectRecognizer
+#from object_recognizer import ObjectRecognizer # note, running this code takes awhile with this
 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
@@ -50,12 +50,12 @@ class Motion(object):
 
         rospy.sleep(0.8)
 
-        self.drop()
+        #self.drop()
 
 # actions:
 
     # def moveto(self, destination):
-    ##orient self in front of dumbbell
+    # orient self in front of dumbbell
     #
     def pickup(self):
 
