@@ -181,9 +181,12 @@ class ObjectRecognizer(object):
         # Each list of predictions in prediction_groups is a list of
         # (word, box) tuples.
         prediction_groups = pipeline.recognize(images)
+        # print (prediction_groups)
+        rospy.sleep(1)
         for i in range(0, 3):
             # Get the word result from each image.
-            wordarr, box = prediction_groups[i]
+           
+            wordarr, _  = prediction_groups[i]
             word, _ = wordarr
             # Nobody's perfect.
             if (word == 'l'):
@@ -299,7 +302,7 @@ class ObjectRecognizer(object):
 
 
     def laser_scan(self, data):
-        if (self.finished):
+        if (self.finished or not self.initalized):
             return
         self.begin_processing(data)
         self.get_locations(data)
