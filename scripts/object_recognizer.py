@@ -47,7 +47,7 @@ class ObjectRecognizer(object):
         # The odometry subscriber.
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.update_odometry)
         # The lidar sub, being used as a glorified timer.
-        self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.begin_processing)
+        self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.laser_scan)
 
 
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -63,6 +63,11 @@ class ObjectRecognizer(object):
         # The order of the objects from left to right (relative to the robot facing them.)
         self.db_order = ["na", "na", "na"]
         self.block_order = [0, 0, 0]
+
+
+        # The actual positons:
+        self.db_pos = [(0,0)] * 3
+        self.block_pos = [(0,0)] * 3
 
 
         # Has everything been found?
@@ -181,7 +186,7 @@ class ObjectRecognizer(object):
             wordarr, box = prediction_groups[i]
             word, _ = wordarr
             # Nobody's perfect.
-            if (word.equals('l')):
+            if (word == 'l'):
                 word = '1'
             print (word)
             self.block_order[i] = int(word)
@@ -225,7 +230,6 @@ class ObjectRecognizer(object):
             print ("Looking for dumbbells...")
             self.turn_to(0)
             self.detect_dumbbell(data)
-            return
 
         # Now find the blocks.
         # The robot will need to spin to do a full sweep of the blocks.
@@ -233,18 +237,85 @@ class ObjectRecognizer(object):
         if (not self.seen_block):
             print ("Looking for blocks...")
             self.detect_block(data)
-            return
 
         print ("-------------------------------------")
         print ("Processing complete!")
         print ("Final db order: ", self.db_order)
         print ("Final block order: ", self.block_order)
-        print ("Shutting down now...")
 
-        rospy.signal_shutdown("Processing complete!")
+
+
+    def get_locations(self, data):
+        """ The goal of this method is to sweep through the lidar scan, which should (hopefully)
+        Find 6 clusters of objects, representing the 3 dumbells and blocks.
+        Starting from 90 degrees, we find lblock, mblock, rblock, db1, db2, db3 in that order."""
+
+        # Is the lidar finding an object?
+        scanning = False
+        # When did the robot start finding an object?
+        scan_val = 90
+        # How many objects have we found so far?
+        counter = 0
+        # Save the ranges
+        distances = []
+
+        for i in range (90, 450):
+            j = i%360
+            curr_range = data.ranges[j]
+            if (curr_range <= data.range_max):
+                # Case 1: Still scanning object...
+                if (scanning):
+                    continue
+                # Case 2: Start scanning object...
+                else:
+                    scanning = True
+                    scan_val = i
+            else:
+                # Case 3: No more object...
+                if (scanning):
+                    #Note that i is used, not j.
+                    index = ((i+scan_val)/2)%360
+                    distances.append ((index, data.ranges[int(index)]))
+                    scanning = False
+                    counter += 1
+                # Case 4: Still no object...
+                else:
+                    continue
+
+
+        for i in range(0, 3):
+            self.block_pos[i] = distances[i]
+        for i in range(3, 6):
+            self.db_pos[i-3] = distances[i]
+        
+        # The final positions
+        print ("Block positions: ", self.block_pos)
+        print ("Dumbell position: ", self.db_pos)
+
+
+
+
+        return
+
+
+    def laser_scan(self, data):
+        if (self.finished):
+            return
+        self.begin_processing(data)
+        self.get_locations(data)
+        self.finished = True
+        
+
+
+
+
 
     def run(self):
         rospy.spin()
+
+
+    def shutdown(self):
+        rospy.signal_shutdown("Processing complete!")
 
 
 if __name__ == '__main__':
