@@ -5,6 +5,7 @@ import rospy
 import moveit_commander
 import moveit_msgs.msg
 
+from sensor_msgs.msg import Image, LaserScan
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from q_learning_project.msg import RobotMoveDBToBlock
@@ -13,8 +14,7 @@ from q_learning_project.msg import RobotMoveDBToBlock
 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
-#STEPS for ease of copy pasting
-#testing 
+# terminal steps for ease of copy pasting
 
 # roscore
 # roslaunch q_learning_project turtlebot3_intro_robo_manipulation.launch
@@ -31,20 +31,19 @@ class Motion(object):
         # initialize this node
         rospy.init_node('motion')
 
-        # the interface to the group of joints making up the turtlebot3
-        # openmanipulator arm
         self.move_group_arm = moveit_commander.MoveGroupCommander("arm")
-
-        # the interface to the group of joints making up the turtlebot3
-        # openmanipulator gripper
         self.move_group_gripper = moveit_commander.MoveGroupCommander("gripper")
 
+        self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.scan_recieved)
+        self.velocity_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
+        #move into default position
         default_pos =[0,.2, .8, -.95]
 
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
 
+        #actions here for testing purposes
         rospy.sleep(0.8)
 
         self.pickup()
@@ -54,11 +53,12 @@ class Motion(object):
         #self.drop()
 
 # actions:
-
-    # def moveto(self, destination):
     # orient self in front of dumbbell
-    #
+    # def moveto(self, destination):
+
     def pickup(self):
+
+        print("Picking up")
 
         grab_pos = [0,.2,.6,-.7]
         lifted_pos = [0,-.10,.6,-.7]
@@ -85,8 +85,11 @@ class Motion(object):
         self.move_group_arm.go(lifted_pos, wait=True)
         self.move_group_arm.stop()
         rospy.sleep(2)
+        print("Holding")
 
     def drop(self):
+
+        print("Putting down")
 
         grab_pos = [0,.2,.6,-.7]
         lifted_pos = [0,-.10,.6,-.7]
@@ -110,7 +113,7 @@ class Motion(object):
 
         rospy.sleep(0.8)
 
-
+        print("Dropped")
 
     def run(self):
         rospy.spin()
