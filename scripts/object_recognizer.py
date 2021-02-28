@@ -185,14 +185,17 @@ class ObjectRecognizer(object):
         rospy.sleep(1)
         for i in range(0, 3):
             # Get the word result from each image.
-           
-            wordarr, _  = prediction_groups[i]
-            word, _ = wordarr
-            # Nobody's perfect.
-            if (word == 'l'):
-                word = '1'
-            print (word)
-            self.block_order[i] = int(word)
+            
+            try:
+                wordarr, _  = prediction_groups[i]
+                word, _ = wordarr
+                # Nobody's perfect.
+                if (word == 'l'):
+                    word = '1'
+                print (word)
+                self.block_order[i] = int(word)
+            except (ValueError):
+                print ("Robot couldn't recognize every image!")
 
         # Return to start.
         self.turn_to (0)
@@ -314,8 +317,12 @@ class ObjectRecognizer(object):
 
 
     def run(self):
-        rospy.spin()
+        #rospy.spin()
+        r = rospy.Rate(10)
+        while (not self.finished):
+            r.sleep()
 
+        print ("Remember to shut down the object recognizer!")
 
     def shutdown(self):
         rospy.signal_shutdown("Processing complete!")
