@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 import rospy, cv2, cv_bridge, numpy, math
@@ -108,54 +107,77 @@ class PerceptionMovement(object):
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
 
-        # command the bot to perform the given move db to block action
-        self.db_to_b()
-
     # get the dumbbel color, block number, and locations of both
     def get_action(self, data):
 
-        db_dex = 0
+        if (not self.finished):
+            return
+
+        db_index = 0
         b_index = 0
+
+        print("the goal\n\n")
+        print(data.robot_db)
+        print(data.block_id)
 
         for x in range(2):
             if (data.robot_db == self.db_order[x]):
                 db_index = x
-                break
+
 
         for y in range(2):
             if (data.block_id == self.block_order[y]):
                 b_index = y
-                break
 
-        self.db_pose = db_pos[db_index]
-        self.b_pose = block_pos[b_index]
+        print(db_index)
+        print(b_index)
+        self.goal_db_pose = self.db_pos[db_index]
+        self.goal_b_pose = self.block_pos[b_index]
 
-        print("Move" + data.robot_db _ " to " + data.block_id)
-        print("Location of goal dumbbell:" + self.db_pose)
-        print("Location of goal block:" + self.b_pose)
+        #print("Move" + data.robot_db + " to block" + data.block_id)
+        #print("Location of goal dumbbell:" + self.goal_db_pose)
+        #print("Location of goal block:" + self.goal_b_pose)
+        print("got action!")
+        # command the bot to perform the given move db to block action
+        self.db_to_b()
+
+# entire moving dumbbell to block command
+    def db_to_b(self):
+
+        db_r = self.goal_db_pose[1]
+        db_theta = self.goal_db_pose[0]
+
+        self.move_to(db_r, db_theta)
+        self.pickup()
+
+        b_r  = self.goal_b_pose[1]
+        b_theta = self.goal_b_pose[0]
+
+        self.move_to(b_r, b_theta)
+        self.drop()
 
     # orient robot in front of target object (dumbbell or block)
-    def move_to(r, theta):
+    def move_to(self, r, theta):
 
         #move dist meters in the current direction
         dist = r - 0.05 #how close you get to dumbbell, may have to change this for block?
 
-        self.turn_to(theta)
-
+        self.turn_to(math.radians(theta)-math.pi)
+        print("turned!")
         #move dist meters in the current direction
 
         #starting pose before the loop
-        start_x = self.odom_pose.pose.position.x
-        start_y = self.odom_pose.pose.position.y
+        start_x = self.odom_pose.position.x
+        start_y = self.odom_pose.position.y
 
-        print("starting location (" + start_x + ", "+ start_y + ")")
+        #print("starting location (" + start_x + ", "+ start_y + ")")
 
         #move forward until robot travels dist meters
         while ((displacement(start_x, start_y,
-            self.odom_pose.pose.position.x, self.odom_pose.pose.position.y)) < dist):
-            self.velocity_pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
+            self.odom_pose.position.x, self.odom_pose.position.y)) < dist):
+            self.pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
          # stop the robot
-        self.velocity_pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
+        self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
 
     def pickup(self):
 
@@ -453,10 +475,11 @@ class PerceptionMovement(object):
 
 
     def run(self):
-        #rospy.spin()
+        #
         r = rospy.Rate(10)
         while (not self.finished):
             r.sleep()
+        rospy.spin()
 
         #print ("Remember to shut down the object recognizer!")
 
