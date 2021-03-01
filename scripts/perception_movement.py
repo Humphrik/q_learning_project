@@ -120,12 +120,12 @@ class PerceptionMovement(object):
         print(data.robot_db)
         print(data.block_id)
 
-        for x in range(2):
+        for x in range(3):
             if (data.robot_db == self.db_order[x]):
                 db_index = x
 
 
-        for y in range(2):
+        for y in range(3):
             if (data.block_id == self.block_order[y]):
                 b_index = y
 
@@ -162,7 +162,16 @@ class PerceptionMovement(object):
         #move dist meters in the current direction
         dist = r - 0.05 #how close you get to dumbbell, may have to change this for block?
 
-        self.turn_to(math.radians(theta)-math.pi)
+        thetarad = math.radians(theta)
+
+        if (thetarad > math.pi):
+            thetarad = 2*math.pi - thetarad
+
+        elif (thetarad < math.pi):
+            thetarad = - thetarad
+
+
+        self.turn_to(thetarad)
         print("turned!")
         #move dist meters in the current direction
 
