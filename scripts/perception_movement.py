@@ -367,6 +367,7 @@ class PerceptionMovement(object):
             except (ValueError):
                 print ("Robot couldn't recognize every image!")
 
+        self.extrapolator()
         # Return to start.
         self.turn_to (0)
         print ("Block detection done!")
@@ -481,7 +482,39 @@ class PerceptionMovement(object):
         self.get_locations(data)
         self.finished = True
 
+    # If only two numbers recognized, extrapolate the 3rd (usually ends up being 2)
+    def extrapolator(self):
 
+        if ((1 in self.block_order) and
+            (2 in self.block_order) and
+            (3 in self.block_order)):
+            print("All block numbers found!")
+            return
+
+        else:
+            found = []
+            missing = 0
+
+            for x in range(3):
+                if (self.block_order[x] == 1):
+                    found.append(1)
+                elif (self.block_order[x] == 2):
+                    found.append(2)
+                elif (self.block_order[x] == 3):
+                    found.append(3)
+
+            for z in range(1,4):
+                if (not z in found):
+                    missing = z
+                    print("Missing:")
+                    print(z)
+
+
+            for y in range(3):
+                if (not self.block_order[y] in found):
+                    self.block_order[y] = missing
+
+            print(self.block_order)
 
     def run(self):
         #

@@ -58,7 +58,7 @@ class ObjectRecognizer(object):
 
         self.seen_dumbbell = False
         self.seen_block = False
-        
+
 
         # The order of the objects from left to right (relative to the robot facing them.)
         self.db_order = ["na", "na", "na"]
@@ -78,7 +78,7 @@ class ObjectRecognizer(object):
 
     def update_odometry(self, data):
         self.odom_pose = data.pose.pose
-        
+
     def image_callback(self, data):
         if (not self.initalized):
             return
@@ -95,12 +95,12 @@ class ObjectRecognizer(object):
         colors.append((numpy.array([0, 10, 10]), numpy.array([10, 255, 255])))
         colors.append((numpy.array([55, 10, 10]), numpy.array([65, 255, 255])))
         colors.append((numpy.array([110, 10, 10]), numpy.array([130, 255, 255])))
-             
+
         h, w, _ = self.img.shape
-        
+
         db_count = 0
         db_locations = []
-        
+
         for i in range(0, 3):
 
             name = ""
@@ -119,7 +119,7 @@ class ObjectRecognizer(object):
             #search_bot = int(3*h/4 + 20)
             #mask[0:search_top, 0:w] = 0
             #mask[search_bot:h, 0:w] = 0
-            
+
             M = cv2.moments(mask)
             if M['m00'] > 0:
                 db_count += 1
@@ -128,8 +128,8 @@ class ObjectRecognizer(object):
                 cy = int(M['m01']/M['m00'])
                 # a black circle is visualized in the debugging window to indicate
                 # the center point of this dumbell's pixels.
-                cv2.circle(self.img, (cx, cy), 20, (0,0,0), -1)   
-                db_locations.append((cx, cy, name)) 
+                cv2.circle(self.img, (cx, cy), 20, (0,0,0), -1)
+                db_locations.append((cx, cy, name))
 
         # We didn't find all 3 dumbbells
         if (db_count != 3):
@@ -185,7 +185,7 @@ class ObjectRecognizer(object):
         rospy.sleep(1)
         for i in range(0, 3):
             # Get the word result from each image.
-            
+
             try:
                 wordarr, _  = prediction_groups[i]
                 word, _ = wordarr
@@ -197,6 +197,9 @@ class ObjectRecognizer(object):
             except (ValueError):
                 print ("Robot couldn't recognize every image!")
 
+        # Check if a block number is missing and replace it
+        self.extrapolator()
+        print("Finished checking block numbers!\n")
         # Return to start.
         self.turn_to (0)
         print ("Block detection done!")
@@ -293,7 +296,7 @@ class ObjectRecognizer(object):
             self.block_pos[i] = distances[i]
         for i in range(3, 6):
             self.db_pos[i-3] = distances[i]
-        
+
         # The final positions
         print ("Block positions: ", self.block_pos)
         print ("Dumbell position: ", self.db_pos)
@@ -310,10 +313,40 @@ class ObjectRecognizer(object):
         self.begin_processing(data)
         self.get_locations(data)
         self.finished = True
-        
+
+    # If only two numbers recognized, extrapolate the 3rd (usually ends up being 2)
+    def extrapolator(self):
+
+        if ((1 in self.block_order) and
+            (2 in self.block_order) and
+            (3 in self.block_order)):
+            print("All block numbers found!")
+            return
+
+        else:
+            found = []
+            missing = 0
+
+            for x in range(3):
+                if (self.block_order[x] == 1):
+                    found.append(1)
+                elif (self.block_order[x] == 2):
+                    found.append(2)
+                elif (self.block_order[x] == 3):
+                    found.append(3)
+
+            for z in range(1,4):
+                if (not z in found):
+                    missing = z
+                    print("Missing:")
+                    print(z)
 
 
+            for y in range(3):
+                if (not self.block_order[y] in found):
+                    self.block_order[y] = missing
 
+            print(self.block_order)
 
 
     def run(self):
