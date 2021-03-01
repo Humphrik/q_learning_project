@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 
 import rospy
+import math
 
 import moveit_commander
 import moveit_msgs.msg
 
-from sensor_msgs.msg import Image, LaserScan
+from nav_msgs.msg import Odometry
+# from sensor_msgs.msg import Image, LaserScans
 from gazebo_msgs.msg import ModelState, ModelStates
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 
 from q_learning_project.msg import RobotMoveDBToBlock
 
-from object_recognizer import ObjectRecognizer # note, running this code takes awhile with this
+from object_recognizer import ObjectRecognizer
 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
@@ -22,6 +24,12 @@ from tf.transformations import quaternion_from_euler, euler_from_quaternion
 # roslaunch turtlebot3_manipulation_moveit_config move_group.launch * remember to press play!
 # rosrun q_learning_project motion.py
 # roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+
+global db_order
+global block_order
+
+global db_pos
+global block_pos
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -35,21 +43,31 @@ def get_yaw_from_pose(p):
 
     return yaw
 
-class Motion(object):
+def displacement(x1, y1, x2, y2):
+    d = math.sqrt(math.pow((x2-x1),2) + math.pow((y2-y1),2))
+    return d
 
+class Motion(object):
 
     def __init__(self):
 
         # initialize this node
         rospy.init_node('motion')
 
+        # arm controls
         self.move_group_arm = moveit_commander.MoveGroupCommander("arm")
         self.move_group_gripper = moveit_commander.MoveGroupCommander("gripper")
 
-        self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.scan_recieved)
+        # The lidar subscriber - delete later?
+        # self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.scan_recieved)
+
+        # The odometry subscriber
+        self.odom_sub = rospy.Subscriber("odom", Odometry, self.update_odometry)
+
+        self.action_sub = rospy.Subscriber("/q_learning/robot_action", RobotMoveDBToBlock, self.get_action)
+
         self.velocity_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
-        self.odom_frame = "odom"
 
         # set the arm into into default position
         default_pos =[0,.2, .8, -.95]
@@ -57,37 +75,42 @@ class Motion(object):
         self.move_group_arm.stop()
 
         # get the location of given db and block
-        self.action = RobotMoveDBToBlock()
-        self.location = ObjectRecognizer()
+        #self.location = ObjectRecognizer()
+        #self.location.run()
 
-        self.action.block_id
-        self.action.robot_db
+        # wait to
+        #while (not self.location.finished):
+        #    pass
 
+
+
+        # command the bot to perform the given move db to block action
+        self.db_to_b()
+
+    def get_action(self):
         db_dex = 0
         b_index = 0
 
         for x in range(2):
-            if (self.action.robot_db = self.location.db_order[x]):
+            if (self.action.robot_db == db_order[x]):
                 db_index = x
-                break;
+                break
 
         for y in range(2):
-            if (self.action.block_id = self.location.block_order[x]):
+            if (self.action.block_id == block_order[y]):
                 b_index = y
-                break;
+                break
 
-        self.db_pose = self.location.db_pos[db_index]
-        self.b_pose = self.location.block_pos[b_index]
+        self.db_pose = db_pos[db_index]
+        self.b_pose = block_pos[b_index]
 
-        # command the node to perform the given move db to block action
-        self.db_to_b()
+        print("Location of goal dumbbell:" + self.db_pose)
+        print("Location of goal block:" + self.b_pose)
 
-        # misc actions here for testing purposes, delete later
-        # rospy.sleep(0.8)
-        # self.pickup()
-        # rospy.sleep(0.8)
-        # self.drop()
+    def update_odometry(self, data):
+        self.odom_pose = data.pose.pose
 
+    # entire moving dumbbell to block command
     def db_to_b(self):
 
         db_r = self.db_pose[0]
@@ -104,17 +127,26 @@ class Motion(object):
 
     # orient self in front of dumbbell
     def move_to(r, theta):
-        dist = 0.05 #how close you get to dumbbell, may have to change this for block?
+
+        #move dist meters in the current direction
+        dist = r - 0.05 #how close you get to dumbbell, may have to change this for block?
+
         self.turn_to(theta)
 
-        self.odom_pose()
-        while ()
-            vel_msg.linear.x = .05
-            self.velocity_pub.publish(vel_msg)
+        #move dist meters in the current direction
 
+        #starting pose before the loop
+        start_x = self.odom_pose.pose.position.x
+        start_y = self.odom_pose.pose.position.y
+
+        print("starting location (" + start_x + ", "+ start_y + ")")
+
+        #move forward until robot travels dist meters
+        while ((displacement(start_x, start_y,
+            self.odom_pose.pose.position.x, self.odom_pose.pose.position.y)) < dist):
+            self.velocity_pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
          # stop the robot
-        vel_msg.linear.x = 0
-        self.velocity_pub.publish(vel_msg)
+        self.velocity_pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
 
     # helper function to turn towards the target object
 
@@ -202,6 +234,19 @@ class Motion(object):
 
 
 if __name__=="__main__":
+
+    node1 = ObjectRecognizer()
+    node1.run()
+
+    db_order = node1.db_order
+    block_order = node1.block_order
+
+    db_pos = node1.db_pos
+    block_pos = node1.block_pos
+
+    print("Objects identified and located!")
+
+    node1.shutdown()
 
     node = Motion()
     node.run()
