@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+# for ease of copy pasting into terminal
+
+# roscore
+# roslaunch q_learning_project turtlebot3_intro_robo_manipulation.launch
+# roslaunch turtlebot3_manipulation_moveit_config move_group.launch * remember to press play!
+# rosrun q_learning_project perception_movement_v2.py
+# rosrun q_learning_project action_tester.py
+# roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+
 import rospy, cv2, cv_bridge, numpy, math
 
 import moveit_commander
@@ -22,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-import keras_ocr
+#import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -107,6 +116,15 @@ class PerceptionMovement(object):
 
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
+        print("default pos")
+
+        open_grip = [0.009, 0.009]
+
+        self.move_group_gripper.go(open_grip, wait=True)
+        self.move_group_gripper.stop()
+        print("open grip")
+
+        rospy.sleep(0.8)
 
         self.action_state = False
 
@@ -169,8 +187,6 @@ class PerceptionMovement(object):
     # orient robot in front of target object (dumbbell or block)
     def move_to(self, r, theta):
 
-        #move dist meters in the current direction
-        #dist = r - 0.05 #how close you get to dumbbell, may have to change this for block?
 
         thetarad = math.radians(theta)
 
@@ -214,7 +230,7 @@ class PerceptionMovement(object):
         lifted_pos = [0,-.10,.6,-.7]
         default_pos =[0,.2, .8, -.95]
 
-        open_grip = [0.004, 0.004]
+        open_grip = [0.009, 0.009]
         closed_grip = [-.005, -0.005]
 
         self.move_group_gripper.go(open_grip, wait=True)
@@ -429,9 +445,11 @@ class PerceptionMovement(object):
         # Now find the blocks.
         # The robot will need to spin to do a full sweep of the blocks.
 
-        if (not self.seen_block):
-            print ("Looking for blocks...")
-            self.detect_block(data)
+        #COMMENTING OUT BLOCKS
+
+        # if (not self.seen_block):
+        #     print ("Looking for blocks...")
+        #     self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -507,7 +525,7 @@ class PerceptionMovement(object):
         if (self.finished and self.action_state):
             #lidar stuff goes here
             vel = Twist()
-            dist = 0.05 # how close we get to target
+            dist = 0.14# how close we get to target
             #go = False
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
@@ -522,12 +540,12 @@ class PerceptionMovement(object):
                 #smallest value is to the right, turn right
             elif (min(data.ranges[1:10]) < min(data.ranges[349:359])):
 
-                vel.angular.z = .2
+                vel.angular.z = .08
                 #print("Turning R")
 
             #smallest value is to the left, turn left
             elif (min(data.ranges[1:10]) > min(data.ranges[349:359])):
-                vel.angular.z = -.2
+                vel.angular.z = -.08
                 #print("Turning L")
 
             if (min(frontranges) <= dist):
@@ -537,7 +555,7 @@ class PerceptionMovement(object):
 
             if (min(frontranges) > dist):
                 #print("Moving")
-                vel.linear.x = .1
+                vel.linear.x = .15 * (1 - (dist/min(frontranges)))
 
 
             self.pub.publish(vel)

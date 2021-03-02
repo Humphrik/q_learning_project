@@ -107,6 +107,14 @@ class PerceptionMovement(object):
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
 
+        open_grip = [0.004, 0.004]
+
+        self.move_group_gripper.go(open_grip, wait=True)
+        self.move_group_gripper.stop()
+        print("open grip")
+
+        rospy.sleep(0.8)
+
     # get the dumbbel color, block number, and locations of both
     def get_action(self, data):
 
