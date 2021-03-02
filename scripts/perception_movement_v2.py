@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-import keras_ocr
+#import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -171,6 +171,7 @@ class PerceptionMovement(object):
         db_theta = self.goal_db_pose[0]
         self.to_db = True
         print("moving to db")
+
         self.move_to(db_r, db_theta)
         while (self.action_state): #wait till action state is false
             pass
@@ -202,6 +203,21 @@ class PerceptionMovement(object):
         self.turn_to(thetarad)
 
         print("turned!")
+
+        if (self.to_db):
+            open_grip = [0.011, 0.011]
+
+            self.move_group_gripper.go(open_grip, wait=True)
+            self.move_group_gripper.stop()
+
+            rospy.sleep(0.8)
+
+            default_pos =[0,.2, .8, -.95]
+
+            self.move_group_arm.go(default_pos, wait=True)
+            self.move_group_arm.stop()
+
+            rospy.sleep(0.8)
 
         #move dist meters in the current direction
 
@@ -251,6 +267,7 @@ class PerceptionMovement(object):
 
         grab_pos = [0,.2,.6,-.7]
         default_pos =[0,.2, .8, -.95]
+        moveback_pos = [0, -.7, 1.35, -.7]
 
         open_grip = [0.011, 0.011]
         closed_grip = [-.005, -0.005]
@@ -265,10 +282,14 @@ class PerceptionMovement(object):
 
         rospy.sleep(0.8)
 
-        self.move_group_arm.go(default_pos, wait=True)
+        self.move_group_arm.go(moveback_pos, wait=True)
         self.move_group_arm.stop()
 
+        print("move back")
+
         rospy.sleep(0.8)
+
+
 
         print("Dropped")
 
@@ -438,9 +459,9 @@ class PerceptionMovement(object):
 
         #COMMENTING OUT BLOCKS
 
-        if (not self.seen_block):
-            print ("Looking for blocks...")
-            self.detect_block(data)
+        # if (not self.seen_block):
+        #     print ("Looking for blocks...")
+        #     self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -513,9 +534,12 @@ class PerceptionMovement(object):
             vel = Twist()
 
             if (self.to_db):
-                dist = 0.13
+
+                dist = 0.132
             else:
-                dist = .4
+                dist = .45
+
+
             # how close we get to target
             #go = False
 
