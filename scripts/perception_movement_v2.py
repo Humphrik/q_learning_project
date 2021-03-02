@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-#import keras_ocr
+import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -118,7 +118,7 @@ class PerceptionMovement(object):
         self.move_group_arm.stop()
         print("default pos")
 
-        open_grip = [0.009, 0.009]
+        open_grip = [0.011, 0.011]
 
         self.move_group_gripper.go(open_grip, wait=True)
         self.move_group_gripper.stop()
@@ -127,6 +127,7 @@ class PerceptionMovement(object):
         rospy.sleep(0.8)
 
         self.action_state = False
+        self.to_db = True
 
     # get the dumbbel color, block number, and locations of both
     def get_action(self, data):
@@ -168,13 +169,16 @@ class PerceptionMovement(object):
 
         db_r = self.goal_db_pose[1]
         db_theta = self.goal_db_pose[0]
-
+        self.to_db = True
+        print("moving to db")
         self.move_to(db_r, db_theta)
         while (self.action_state): #wait till action state is false
             pass
 
         self.pickup()
 
+        self.to_db = False
+        print("moving to block")
         b_r  = self.goal_b_pose[1]
         b_theta = self.goal_b_pose[0]
 
@@ -184,7 +188,6 @@ class PerceptionMovement(object):
 
         self.drop()
 
-    # orient robot in front of target object (dumbbell or block)
     def move_to(self, r, theta):
 
 
@@ -209,28 +212,17 @@ class PerceptionMovement(object):
                 return
         print("action state true time to move")
 
-        #starting pose before the loop
-        # start_x = self.odom_pose.position.x
-        # start_y = self.odom_pose.position.y
-        #
-        # #print("starting location (" + start_x + ", "+ start_y + ")")
-        #
-        # #move forward until robot travels dist meters
-        # while ((displacement(start_x, start_y,
-        #     self.odom_pose.position.x, self.odom_pose.position.y)) < dist):
-        #     self.pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
-        #  # stop the robot
-        # self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
+
 
     def pickup(self):
 
         print("Picking up")
 
         grab_pos = [0,.2,.6,-.7]
-        lifted_pos = [0,-.10,.6,-.7]
+        lifted_pos = [0,-.7,.150,.350]
         default_pos =[0,.2, .8, -.95]
 
-        open_grip = [0.009, 0.009]
+        open_grip = [0.011, 0.011]
         closed_grip = [-.005, -0.005]
 
         self.move_group_gripper.go(open_grip, wait=True)
@@ -258,10 +250,9 @@ class PerceptionMovement(object):
         print("Putting down")
 
         grab_pos = [0,.2,.6,-.7]
-        lifted_pos = [0,-.10,.6,-.7]
         default_pos =[0,.2, .8, -.95]
 
-        open_grip = [0.009, 0.009]
+        open_grip = [0.011, 0.011]
         closed_grip = [-.005, -0.005]
 
         self.move_group_arm.go(grab_pos, wait=True)
@@ -447,9 +438,9 @@ class PerceptionMovement(object):
 
         #COMMENTING OUT BLOCKS
 
-        # if (not self.seen_block):
-        #     print ("Looking for blocks...")
-        #     self.detect_block(data)
+        if (not self.seen_block):
+            print ("Looking for blocks...")
+            self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -505,11 +496,7 @@ class PerceptionMovement(object):
         print ("Block positions: ", self.block_pos)
         print ("Dumbell position: ", self.db_pos)
 
-
-
-
         return
-
 
     def laser_scan(self, data):
         if (not self.initalized):
@@ -520,33 +507,37 @@ class PerceptionMovement(object):
             self.get_locations(data)
             self.finished = True
 
-
         # after objects found, move to the target when an action is received
         if (self.finished and self.action_state):
             #lidar stuff goes here
             vel = Twist()
-            dist = 0.14# how close we get to target
+
+            if (self.to_db):
+                dist = 0.13
+            else:
+                dist = .4
+            # how close we get to target
             #go = False
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
 
+            if (self.to_db):
+                if (frontranges[0] == min(frontranges)):
+                    #robot is aligned, keep moving forward
+                    vel.angular.z = 0
+                    #print("in position")
 
-            if (frontranges[0] == min(frontranges)):
-                #robot is aligned, keep moving forward
-                vel.angular.z = 0
-                #print("in position")
+                #if robot is not directly in front of robot, turn to correct
+                    #smallest value is to the right, turn right
+                elif (min(data.ranges[1:10]) < min(data.ranges[349:359])):
 
-            #if robot is not directly in front of robot, turn to correct
-                #smallest value is to the right, turn right
-            elif (min(data.ranges[1:10]) < min(data.ranges[349:359])):
+                    vel.angular.z = .08
+                    #print("Turning R")
 
-                vel.angular.z = .08
-                #print("Turning R")
-
-            #smallest value is to the left, turn left
-            elif (min(data.ranges[1:10]) > min(data.ranges[349:359])):
-                vel.angular.z = -.08
-                #print("Turning L")
+                #smallest value is to the left, turn left
+                elif (min(data.ranges[1:10]) > min(data.ranges[349:359])):
+                    vel.angular.z = -.08
+                    #print("Turning L")
 
             if (min(frontranges) <= dist):
                 self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
