@@ -112,16 +112,9 @@ class PerceptionMovement(object):
         # MOVEMENT AND MANIPULATION __________________________________________
 
         # set the arm into into default position
-        default_pos =[0,.2, .8, -.95]
+        self.arm_default()
 
-        self.move_group_arm.go(default_pos, wait=True)
-        self.move_group_arm.stop()
-        print("default pos")
-
-        open_grip = [0.011, 0.011]
-
-        self.move_group_gripper.go(open_grip, wait=True)
-        self.move_group_gripper.stop()
+        self.arm_open()
         print("open grip")
 
         rospy.sleep(0.8)
@@ -205,17 +198,11 @@ class PerceptionMovement(object):
         print("turned!")
 
         if (self.to_db):
-            open_grip = [0.011, 0.011]
-
-            self.move_group_gripper.go(open_grip, wait=True)
-            self.move_group_gripper.stop()
+            self.arm_open()
 
             rospy.sleep(0.8)
 
-            default_pos =[0,.2, .8, -.95]
-
-            self.move_group_arm.go(default_pos, wait=True)
-            self.move_group_arm.stop()
+            self.arm_default()
 
             rospy.sleep(0.8)
 
@@ -234,27 +221,14 @@ class PerceptionMovement(object):
 
         print("Picking up")
 
-        grab_pos = [0,.2,.6,-.7]
+
         lifted_pos = [0,-.7,.150,.350]
-        default_pos =[0,.2, .8, -.95]
 
-        open_grip = [0.011, 0.011]
-        closed_grip = [-.005, -0.005]
+        self.arm_open()
 
-        self.move_group_gripper.go(open_grip, wait=True)
-        self.move_group_gripper.stop()
+        #self.arm_grab()
 
-        rospy.sleep(0.8)
-
-        self.move_group_arm.go(grab_pos, wait=True)
-        self.move_group_arm.stop()
-
-        rospy.sleep(0.8)
-
-        self.move_group_gripper.go(closed_grip, wait=True)
-        self.move_group_gripper.stop()
-
-        rospy.sleep(0.8)
+        self.arm_close()
 
         self.move_group_arm.go(lifted_pos, wait=True)
         self.move_group_arm.stop()
@@ -265,22 +239,13 @@ class PerceptionMovement(object):
 
         print("Putting down")
 
-        grab_pos = [0,.2,.6,-.7]
-        default_pos =[0,.2, .8, -.95]
+
         moveback_pos = [0, -.7, 1.35, -.7]
 
-        open_grip = [0.011, 0.011]
-        closed_grip = [-.005, -0.005]
 
-        self.move_group_arm.go(grab_pos, wait=True)
-        self.move_group_arm.stop()
+        self.arm_default()
 
-        rospy.sleep(0.8)
-
-        self.move_group_gripper.go(open_grip, wait=True)
-        self.move_group_gripper.stop()
-
-        rospy.sleep(0.8)
+        self.arm_open()
 
         self.move_group_arm.go(moveback_pos, wait=True)
         self.move_group_arm.stop()
@@ -292,6 +257,44 @@ class PerceptionMovement(object):
 
 
         print("Dropped")
+
+    def arm_default(self):
+        #default_pos =[0,.2, .8, -.95]
+        default_pos = [0, .6, .25, -.95]
+        self.move_group_arm.go(default_pos, wait=True)
+        self.move_group_arm.stop()
+        rospy.sleep(0.8)
+
+        print("default pos")
+
+    def arm_grab(self):
+        grab_pos = [0,.2,.6,-.7]
+
+        self.move_group_arm.go(grab_pos, wait=True)
+        self.move_group_arm.stop()
+
+        rospy.sleep(0.8)
+
+    def arm_open(self):
+        open_grip = [0.013, 0.013]
+
+        self.move_group_gripper.go(open_grip, wait=True)
+        self.move_group_gripper.stop()
+
+        rospy.sleep(0.8)
+
+    def arm_close(self):
+        closed_grip = [-.005, -0.005]
+
+        self.move_group_gripper.go(closed_grip, wait=True)
+        self.move_group_gripper.stop()
+
+        rospy.sleep(0.8)
+
+
+
+
+
 
     def update_odometry(self, data):
         self.odom_pose = data.pose.pose
@@ -535,13 +538,9 @@ class PerceptionMovement(object):
 
             if (self.to_db):
 
-                dist = 0.132
+                dist = 0.133
             else:
                 dist = .45
-
-
-            # how close we get to target
-            #go = False
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
 
@@ -577,10 +576,6 @@ class PerceptionMovement(object):
 
             # if robot is not close enouhg, keep moving forward
             #if (go):
-
-
-
-
     # If only two numbers recognized, extrapolate the 3rd (usually ends up being 2)
     def extrapolator(self):
 
