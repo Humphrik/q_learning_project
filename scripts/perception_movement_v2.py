@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-import keras_ocr
+#import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -57,6 +57,7 @@ class PerceptionMovement(object):
 
         self.initalized = False
         self.action_state = False
+        self.last_angle = 0
 
         rospy.init_node('perception_movement')
 
@@ -170,6 +171,7 @@ class PerceptionMovement(object):
             pass
 
         self.pickup()
+        self.to_origin()
 
         self.to_db = False
         print("moving to block")
@@ -182,19 +184,21 @@ class PerceptionMovement(object):
 
         self.drop()
 
-        self.turn_to(0)
+        self.to_origin()
 
 
     def move_to(self, r, theta):
 
 
         thetarad = math.radians(theta)
+        self.last_angle = thetarad
 
         if (thetarad > math.pi):
             thetarad = 2*math.pi - thetarad
 
         elif (thetarad < math.pi):
             thetarad = - thetarad
+
 
         self.turn_to(thetarad)
 
@@ -443,6 +447,33 @@ class PerceptionMovement(object):
         return
 
 
+    def to_origin(self):
+
+        thetarad = math.pi + self.last_angle
+
+        if (thetarad > math.pi):
+            thetarad = 2*math.pi - thetarad
+
+        elif (thetarad < math.pi):
+            thetarad = - thetarad
+
+        self.turn_to(thetarad)
+        print("turning back to origin...")
+
+        print(self.odom_pose.position)
+        print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+
+        while ((displacement(0, 0,
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .10):
+            self.pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
+            print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+         # stop the robot
+        self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
+
+
+        self.turn_to(0)
+        print("back to origin")
+
 
     # Turn to the given yaw value.
     def turn_to (self, theta):
@@ -481,9 +512,9 @@ class PerceptionMovement(object):
 
         #COMMENTING OUT BLOCKS
 
-        if (not self.seen_block):
-            print ("Looking for blocks...")
-            self.detect_block(data)
+        # if (not self.seen_block):
+        #     print ("Looking for blocks...")
+        #     self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -589,7 +620,7 @@ class PerceptionMovement(object):
             if (min(frontranges) > dist):
                 #print("Moving")
                 vel.linear.x = .15 * (1 - (dist/min(frontranges)))
-                print(min(frontranges))
+                #print(min(frontranges))
 
 
             self.pub.publish(vel)
