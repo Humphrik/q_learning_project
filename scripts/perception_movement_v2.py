@@ -182,6 +182,8 @@ class PerceptionMovement(object):
 
         self.drop()
 
+        self.turn_to(0)
+
     def move_to(self, r, theta):
 
 
@@ -224,21 +226,27 @@ class PerceptionMovement(object):
 
         #lifted_pos = [0,-.7,.150,.350]
         #lifted_pos = [0,-.7,.1,.5]
-        lifted_pos = [0,-.7,.1,.35]
-
+        #lifted_pos = [0,-.7,.1,.35]
+        lifted_pos = [0,-.10,.6,-.7]
         self.arm_open()
 
         #self.arm_grab()
 
         self.arm_close()
-
-        t_pos = [0, 0, 0, 0]
-        self.move_group_arm.go(t_pos, wait=True)
-        self.move_group_arm.stop()
+        #
+        # t_pos = [0, 0, 0, 0]
+        # self.move_group_arm.go(t_pos, wait=True)
+        # self.move_group_arm.stop()
 
         self.move_group_arm.go(lifted_pos, wait=True)
         self.move_group_arm.stop()
         rospy.sleep(2)
+
+        #elf.move_group_arm.go([0, -.1, -.1, -.7], wait=True)
+        self.move_group_arm.go([0, -.1, .1, -.7], wait=True)
+        self.move_group_arm.stop()
+        rospy.sleep(2)
+
         print("Holding")
 
     def drop(self):
@@ -580,6 +588,7 @@ class PerceptionMovement(object):
             if (min(frontranges) > dist):
                 #print("Moving")
                 vel.linear.x = .15 * (1 - (dist/min(frontranges)))
+                print(min(frontranges))
 
 
             self.pub.publish(vel)
