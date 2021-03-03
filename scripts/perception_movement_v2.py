@@ -222,13 +222,19 @@ class PerceptionMovement(object):
         print("Picking up")
 
 
-        lifted_pos = [0,-.7,.150,.350]
+        #lifted_pos = [0,-.7,.150,.350]
+        #lifted_pos = [0,-.7,.1,.5]
+        lifted_pos = [0,-.7,.1,.35]
 
         self.arm_open()
 
         #self.arm_grab()
 
         self.arm_close()
+
+        t_pos = [0, 0, 0, 0]
+        self.move_group_arm.go(t_pos, wait=True)
+        self.move_group_arm.stop()
 
         self.move_group_arm.go(lifted_pos, wait=True)
         self.move_group_arm.stop()
@@ -239,14 +245,18 @@ class PerceptionMovement(object):
 
         print("Putting down")
 
+        #arm transition state
+        t_pos = [0, 0, 0, 0]
+        self.move_group_arm.go(t_pos, wait=True)
+        self.move_group_arm.stop()
 
-        moveback_pos = [0, -.7, 1.35, -.7]
-
+        rospy.sleep(2)
 
         self.arm_default()
 
         self.arm_open()
 
+        moveback_pos = [0, -.7, 1.35, -.7]
         self.move_group_arm.go(moveback_pos, wait=True)
         self.move_group_arm.stop()
 
@@ -538,7 +548,7 @@ class PerceptionMovement(object):
 
             if (self.to_db):
 
-                dist = 0.133
+                dist = 0.14
             else:
                 dist = .45
 
