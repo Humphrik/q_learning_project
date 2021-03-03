@@ -184,6 +184,7 @@ class PerceptionMovement(object):
 
         self.turn_to(0)
 
+
     def move_to(self, r, theta):
 
 
@@ -224,7 +225,7 @@ class PerceptionMovement(object):
         print("Picking up")
 
 
-        #lifted_pos = [0,-.7,.150,.350]
+        #get_locationspos = [0,-.7,.150,.350]
         #lifted_pos = [0,-.7,.1,.5]
         #lifted_pos = [0,-.7,.1,.35]
         lifted_pos = [0,-.10,.6,-.7]
