@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-#import keras_ocr
+import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -57,7 +57,7 @@ class PerceptionMovement(object):
 
         self.initalized = False
         self.action_state = False
-        self.last_angle = 0
+
 
         rospy.init_node('perception_movement')
 
@@ -191,7 +191,7 @@ class PerceptionMovement(object):
 
 
         thetarad = math.radians(theta)
-        self.last_angle = thetarad
+
 
         if (thetarad > math.pi):
             thetarad = 2*math.pi - thetarad
@@ -227,7 +227,6 @@ class PerceptionMovement(object):
     def pickup(self):
 
         print("Picking up")
-
 
         #get_locationspos = [0,-.7,.150,.350]
         #lifted_pos = [0,-.7,.1,.5]
@@ -313,11 +312,6 @@ class PerceptionMovement(object):
         self.move_group_gripper.stop()
 
         rospy.sleep(0.8)
-
-
-
-
-
 
     def update_odometry(self, data):
         self.odom_pose = data.pose.pose
@@ -449,7 +443,9 @@ class PerceptionMovement(object):
 
     def to_origin(self):
 
-        thetarad = math.pi + self.last_angle
+        angle  = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
+        print(math.degrees(angle))
+        thetarad = math.pi + angle
 
         if (thetarad > math.pi):
             thetarad = 2*math.pi - thetarad
@@ -457,14 +453,15 @@ class PerceptionMovement(object):
         elif (thetarad < math.pi):
             thetarad = - thetarad
 
-        self.turn_to(thetarad)
-        print("turning back to origin...")
+        self.turn_to(-thetarad)
+        print("turned back to origin")
 
         print(self.odom_pose.position)
-        print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+
+        #print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .10):
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .04):
             self.pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
             print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
          # stop the robot
@@ -512,9 +509,9 @@ class PerceptionMovement(object):
 
         #COMMENTING OUT BLOCKS
 
-        # if (not self.seen_block):
-        #     print ("Looking for blocks...")
-        #     self.detect_block(data)
+        if (not self.seen_block):
+            print ("Looking for blocks...")
+            self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -590,7 +587,7 @@ class PerceptionMovement(object):
 
                 dist = 0.14
             else:
-                dist = .45
+                dist = .4
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
 
