@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-import keras_ocr
+#import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -269,7 +269,9 @@ class PerceptionMovement(object):
 
         rospy.sleep(2)
 
-        self.arm_default()
+        t_pos = [0, .95, -.15, -.950]
+        self.move_group_arm.go(t_pos, wait=True)
+        self.move_group_arm.stop()
 
         self.arm_open()
 
@@ -287,7 +289,8 @@ class PerceptionMovement(object):
 
     def arm_default(self):
         #default_pos =[0,.2, .8, -.95]
-        default_pos = [0, .6, .25, -.95]
+        #default_pos = [0, .6, .25, -.95]
+        default_pos = [0, .2, .8, -1.3]
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
         rospy.sleep(0.8)
@@ -450,9 +453,7 @@ class PerceptionMovement(object):
         self.seen_block = True
         return
 
-
-    def to_origin(self):
-
+    def origin_readjust(self):
         angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
         print(math.degrees(angle))
 
@@ -485,6 +486,10 @@ class PerceptionMovement(object):
 
         rospy.sleep(.1)
 
+    def to_origin(self):
+
+        #self.origin_readjust()
+        #self.origin_readjust()
         angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
         print(math.degrees(angle))
 
@@ -503,6 +508,7 @@ class PerceptionMovement(object):
             thetarad = math.pi + angle
             print(math.degrees(thetarad))
 
+
         # convert for turn to
         if (thetarad > math.pi):
             thetarad = - (2*math.pi - thetarad)
@@ -516,16 +522,36 @@ class PerceptionMovement(object):
         print("turned back to origin")
 
         print(self.odom_pose.position)
-        print("turning back to origin...")
+        print("moving back to origin...")
 
         print(self.odom_pose.position)
         print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
-
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .1):
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .15):
 
-            xvel = .3 * (displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+# ##
+#             angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
+#             thetarad = angle
+#
+#
+#             # depends on quadrants
+#             if (self.odom_pose.position.y < 0 and self.odom_pose.position.x < 0):
+#                 thetarad =  math.pi + angle
+#
+#             elif (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
+#                 thetarad = math.pi - angle
+#
+#             elif (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
+#                 thetarad = 2* math.pi - angle
+# #
+#             if (get_yaw_from_pose(self.odom_pose) > thetarad):
+#                 zvel = -.05
+#
+#             elif (get_yaw_from_pose(self.odom_pose) < thetarad):
+#                 zvel = .05
+# ##
+            xvel = .2 * (displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
             self.pub.publish(Vector3(xvel, 0, 0), Vector3(0, 0, 0))
 
 
@@ -573,10 +599,10 @@ class PerceptionMovement(object):
         # Now find the blocks.
         # The robot will need to spin to do a full sweep of the blocks.
 
-
-        if (not self.seen_block):
-            print ("Looking for blocks...")
-            self.detect_block(data)
+        #
+        # if (not self.seen_block):
+        #     print ("Looking for blocks...")
+        #     self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -652,7 +678,7 @@ class PerceptionMovement(object):
 
                 dist = 0.15
             else:
-                dist = .50
+                dist = .60
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
 
