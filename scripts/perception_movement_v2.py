@@ -7,7 +7,8 @@
 # roslaunch turtlebot3_manipulation_moveit_config move_group.launch * remember to press play!
 # rosrun q_learning_project perception_movement_v2.py
 # rosrun q_learning_project action_tester.py
-# roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+# rosrun q_learning_project q_matrix.py
+
 
 import rospy, cv2, cv_bridge, numpy, math
 
@@ -25,13 +26,12 @@ from q_learning_project.msg import RobotMoveDBToBlock
 import tf
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
-
 import matplotlib.pyplot as plt
 
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-#import keras_ocr
+import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -88,7 +88,6 @@ class PerceptionMovement(object):
 
         self.seen_dumbbell = False
         self.seen_block = False
-
 
         # The order of the objects from left to right (relative to the robot facing them.)
         self.db_order = ["na", "na", "na"]
@@ -150,12 +149,7 @@ class PerceptionMovement(object):
         self.goal_db_pose = self.db_pos[db_index]
         self.goal_b_pose = self.block_pos[b_index]
 
-        #print("Move" + data.robot_db + " to block" + data.block_id)
-        #print("Location of goal dumbbell:" + self.goal_db_pose)
-        #print("Location of goal block:" + self.goal_b_pose)
-        print("got action!")
         # command the bot to perform the given move db to block action
-
         self.db_to_b()
 
 # entire moving dumbbell to block command
@@ -168,7 +162,7 @@ class PerceptionMovement(object):
         print("moving to db")
 
         self.move_to(db_r, db_theta)
-        while (self.action_state): #wait till action state is false
+        while (self.action_state): # wait till action state is false
             pass
 
         self.pickup()
@@ -180,7 +174,7 @@ class PerceptionMovement(object):
         b_theta = self.goal_b_pose[0]
 
         self.move_to(b_r, b_theta)
-        while (self.action_state): #wait till action state is false
+        while (self.action_state): # wait till action state is false
             pass
 
         self.drop()
@@ -200,7 +194,6 @@ class PerceptionMovement(object):
         elif (thetarad < math.pi):
             thetarad = - thetarad
 
-
         self.turn_to(thetarad)
 
         print("turned!")
@@ -213,8 +206,6 @@ class PerceptionMovement(object):
             self.arm_default()
 
             rospy.sleep(0.8)
-
-        #move dist meters in the current direction
 
         # now robot can use lidar callback to move more precisely to target
         self.action_state = True
@@ -229,30 +220,16 @@ class PerceptionMovement(object):
 
         print("Picking up")
 
-
-        #get_locationspos = [0,-.7,.150,.350]
-        #lifted_pos = [0,-.7,.1,.5]
-        #lifted_pos = [0,-.7,.1,.35]
-        #lifted_pos = [0,-.10,.6,-.7]
-
         lifted_pos = [0.0, -.3, .1, -0.9]
 
         self.arm_open()
 
-        #self.arm_grab()
-
         self.arm_close()
-        #
-        # t_pos = [0, 0, 0, 0]
-        # self.move_group_arm.go(t_pos, wait=True)
-        # self.move_group_arm.stop()
 
         self.move_group_arm.go(lifted_pos, wait=True)
         self.move_group_arm.stop()
         rospy.sleep(2)
 
-        #elf.move_group_arm.go([0, -.1, -.1, -.7], wait=True)
-        #self.move_group_arm.go([0, -.1, .1, -.7], wait=True) maybe keep this?
         self.move_group_arm.stop()
         rospy.sleep(2)
 
@@ -283,13 +260,9 @@ class PerceptionMovement(object):
 
         rospy.sleep(0.8)
 
-
-
         print("Dropped")
 
     def arm_default(self):
-        #default_pos =[0,.2, .8, -.95]
-        #default_pos = [0, .6, .25, -.95]
         default_pos = [0, .2, .8, -1.3]
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
@@ -320,11 +293,6 @@ class PerceptionMovement(object):
         self.move_group_gripper.stop()
 
         rospy.sleep(0.8)
-
-
-
-
-
 
     def update_odometry(self, data):
         self.odom_pose = data.pose.pose
@@ -460,6 +428,7 @@ class PerceptionMovement(object):
         thetarad = angle
 
         # depends on quadrants
+
         if (self.odom_pose.position.y > 0 and self.odom_pose.position.x > 0):
             thetarad = math.pi + angle
             print(math.degrees(thetarad))
@@ -488,8 +457,6 @@ class PerceptionMovement(object):
 
     def to_origin(self):
 
-        #self.origin_readjust()
-        #self.origin_readjust()
         angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
         print(math.degrees(angle))
 
@@ -527,35 +494,12 @@ class PerceptionMovement(object):
         print(self.odom_pose.position)
         print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
+        #  move to origin
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .15):
-
-# ##
-#             angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
-#             thetarad = angle
-#
-#
-#             # depends on quadrants
-#             if (self.odom_pose.position.y < 0 and self.odom_pose.position.x < 0):
-#                 thetarad =  math.pi + angle
-#
-#             elif (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
-#                 thetarad = math.pi - angle
-#
-#             elif (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
-#                 thetarad = 2* math.pi - angle
-# #
-#             if (get_yaw_from_pose(self.odom_pose) > thetarad):
-#                 zvel = -.05
-#
-#             elif (get_yaw_from_pose(self.odom_pose) < thetarad):
-#                 zvel = .05
-# ##
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .5):
             xvel = .2 * (displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
             self.pub.publish(Vector3(xvel, 0, 0), Vector3(0, 0, 0))
 
-
-            #print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
          # stop the robot
         self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
 
@@ -599,10 +543,10 @@ class PerceptionMovement(object):
         # Now find the blocks.
         # The robot will need to spin to do a full sweep of the blocks.
 
-        #
-        # if (not self.seen_block):
-        #     print ("Looking for blocks...")
-        #     self.detect_block(data)
+
+        if (not self.seen_block):
+            print ("Looking for blocks...")
+            self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
@@ -707,9 +651,8 @@ class PerceptionMovement(object):
 
             if (min(frontranges) > dist):
                 #print("Moving")
-                vel.linear.x = .3 * (1 - (dist/min(frontranges)))
+                vel.linear.x = .2 * (1 - (dist/min(frontranges)))
                 #print(min(frontranges))
-
 
             self.pub.publish(vel)
 
@@ -742,7 +685,6 @@ class PerceptionMovement(object):
                     print("Missing:")
                     print(z)
 
-
             for y in range(3):
                 if (not self.block_order[y] in found):
                     self.block_order[y] = missing
@@ -755,11 +697,6 @@ class PerceptionMovement(object):
         while (not self.finished):
             r.sleep()
         rospy.spin()
-
-        #print ("Remember to shut down the object recognizer!")
-
-    #def shutdown(self):
-        #rospy.signal_shutdown("Processing complete!")
 
 
 if __name__ == '__main__':
