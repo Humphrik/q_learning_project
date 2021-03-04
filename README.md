@@ -262,7 +262,13 @@ Maneuvering the robot forward so that the open grip of the arm goes precisely ar
 - *Kailin*: One takeaway I had was to write test scripts for part and debugging those before combining it with other pieces of code. After I combined the object recognizing and motion scripts, I wasted time by waiting for the object recognition to complete every single time I ran the code to debug motion.
 - *Kenneth*: My main takeaway from this project was the fact that a seemingly trivial task for humans requires many individual parts working in harmony for a robot to complete. Ultimately, the careful cooperation between various techniques and functionalities is necessary to complete any complex task for a robot.
 
-(Gif to be added soon.)
-
+Gifs of Behaviour
+These 3 gifs occurred in order during a single run of the algorithm.
+1) An excerpt of the q_matrix script as it runs.
+![Q Matrix](qmatrix.gif)
+2) What the robot looks like as it processes visual data.
+![Vision](vision.gif)
+3) An example of a dumbbell successfully place a dumbbell in front of the correct block, according to the Q-matrix.
+![motion](motion.gif)
 
 
