@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Credit to https://pypi.org/project/keras-ocr/
 # pip install keras-ocr
 # pip install tensorflow
-#import keras_ocr
+import keras_ocr
 
 # A helper function that takes in a Pose object (geometry_msgs) and returns yaw
 def get_yaw_from_pose(p):
@@ -573,11 +573,10 @@ class PerceptionMovement(object):
         # Now find the blocks.
         # The robot will need to spin to do a full sweep of the blocks.
 
-        #COMMENTING OUT BLOCKS
 
-        # if (not self.seen_block):
-        #     print ("Looking for blocks...")
-        #     self.detect_block(data)
+        if (not self.seen_block):
+            print ("Looking for blocks...")
+            self.detect_block(data)
 
         print ("-------------------------------------")
         print ("Processing complete!")
