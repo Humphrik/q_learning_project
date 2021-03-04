@@ -57,7 +57,7 @@ class PerceptionMovement(object):
 
         self.initalized = False
         self.action_state = False
-
+        self.last_angle = 0
 
         rospy.init_node('perception_movement')
 
@@ -191,7 +191,7 @@ class PerceptionMovement(object):
 
 
         thetarad = math.radians(theta)
-
+        self.last_angle = thetarad
 
         if (thetarad > math.pi):
             thetarad = 2*math.pi - thetarad
@@ -227,6 +227,7 @@ class PerceptionMovement(object):
     def pickup(self):
 
         print("Picking up")
+
 
         #get_locationspos = [0,-.7,.150,.350]
         #lifted_pos = [0,-.7,.1,.5]
@@ -285,7 +286,7 @@ class PerceptionMovement(object):
         default_pos = [0, .6, .25, -.95]
         self.move_group_arm.go(default_pos, wait=True)
         self.move_group_arm.stop()
-        rospy.sleep(0.8)
+        rospy.sleep(0.2)
 
         print("default pos")
 
@@ -295,15 +296,15 @@ class PerceptionMovement(object):
         self.move_group_arm.go(grab_pos, wait=True)
         self.move_group_arm.stop()
 
-        rospy.sleep(0.8)
+        rospy.sleep(0.2)
 
     def arm_open(self):
-        open_grip = [0.018, 0.018]
+        open_grip = [0.019, 0.019]
 
         self.move_group_gripper.go(open_grip, wait=True)
         self.move_group_gripper.stop()
 
-        rospy.sleep(0.8)
+        rospy.sleep(0.2)
 
     def arm_close(self):
         closed_grip = [.005, 0.005]
@@ -311,7 +312,12 @@ class PerceptionMovement(object):
         self.move_group_gripper.go(closed_grip, wait=True)
         self.move_group_gripper.stop()
 
-        rospy.sleep(0.8)
+        rospy.sleep(0.2)
+
+
+
+
+
 
     def update_odometry(self, data):
         self.odom_pose = data.pose.pose
@@ -443,29 +449,24 @@ class PerceptionMovement(object):
 
     def to_origin(self):
 
-        angle  = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
-        print(math.degrees(angle))
-        thetarad = math.pi + angle
+        thetarad = math.pi + self.last_angle
 
-        #thetarad = (math.atan(self.odom_pose.position.y/self.odom_pose.position.x)) % (2*math.pi)
-        print(math.degrees(thetarad))
         if (thetarad > math.pi):
             thetarad = 2*math.pi - thetarad
 
         elif (thetarad < math.pi):
             thetarad = - thetarad
-        print(math.degrees(thetarad))
-        self.turn_to(-thetarad)
-        print("turned back to origin")
+
+        self.turn_to(thetarad)
+        print("turning back to origin...")
 
         print(self.odom_pose.position)
-
-        #print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+        print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .04):
-            self.pub.publish(Vector3(.1, 0, 0), Vector3(0, 0, 0))
-            #print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .10):
+            self.pub.publish(Vector3(.3, 0, 0), Vector3(0, 0, 0))
+            print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
          # stop the robot
         self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
 
@@ -587,9 +588,9 @@ class PerceptionMovement(object):
 
             if (self.to_db):
 
-                dist = 0.14
+                dist = 0.15
             else:
-                dist = .6
+                dist = .50
 
             frontranges = data.ranges[0:10] + data.ranges[349:359]
 
@@ -618,7 +619,7 @@ class PerceptionMovement(object):
 
             if (min(frontranges) > dist):
                 #print("Moving")
-                vel.linear.x = .15 * (1 - (dist/min(frontranges)))
+                vel.linear.x = .3 * (1 - (dist/min(frontranges)))
                 #print(min(frontranges))
 
 
