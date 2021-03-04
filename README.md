@@ -62,11 +62,6 @@ Sunday, Feb 28 - Successfully implement all 3 sections of code together.
 
 Monday, March 1- submit project
 
-testing
-
-
-
-
 
 # HQ-Learning Project
 
@@ -228,24 +223,34 @@ for i in range(0, 3):
 # Finding the locations is done in the same call to locate_objects.
 ```
 ## Robot manipulation and movement
-The implementation for robot manipulation and movement is in `perception_movement_v2.py`.
+The implementation for robot manipulation and movement is in `perception_movement_v2.py`. We run after the world is initialized and when the world is rest.  Manipulation and movement occurs after all perception has been completed and the arrays of dumbbell order (`db_order`), dumbbell positions (`db_pos`), block order (`block_order`), and block positions (`block_pos`) have all been found. The order of the objects are stored from left to right and the positions are stored as radian coordinates. 
 
-During initialization, the robot arm is moved into a default position, an array name default_pos. This position orients the arm so that it doesn’t stick out too far forward.
 
-Moving to the right spot in order to pick up a dumbbell
+###Moving to the right spot in order to pick up a dumbbell
 
--   We run the node from `object_recognizer.py` after the world is initialized and when the world is rest. The node stores the order of the blocks from left to right and the dumbbells from left to right, as well as the positions of all 6 of these objects as radian coordinates. In `the function move_to()` in `motion.py`
+-   Once the robot has recieved the desired dumbbell color and block number, the `self.get_action()` subscriber callback function gets their coordinates from the order and position arrays. Then, `self.get_action()` calls the function `self.db_to_b()`, which is the entire movement of getting the dumbbell and dropping it off at the block.
+
+-   `self.db_to_b()` calls `move_to()`. Within `move_to()`, the robot calls `turn_to()` the direction of the dumbbell angle. Then, `self.action_state` is set `True`. This allows the `self.laser_scan()` function to start moving the robot towards the dumbbell. Since the robot is likely not exactly facing the dumbbell dumbbel and may have some noise in its movement, the angular velocity is adjusted as it moves so that the closest object read by the lidar in front of the robot is in the direction of movement. The robot moves until the displacement between the robot and the dumbbell it is equal to `dist` for dumbbells, which is 0.15 m.`self.action_state` is set to `False`, so back in `self.db_to_b()`, the robot knows to start the picking up motion.
    
 ### Picking up the dumbbell
--   Once the robot has oriented itself [] distance in front of the dumbbell,
+-   The function `arm_default()`, sets the arm into a position for when it moves to grab the dumbbell. The robot is intialized into this position. `arm_open()` opens the grip and `arm_close()` closes the grip. 
+
+- Once the robot is oriented in front of the dumbbell, `self.db_to_b()` calls `pickup()`. This closes the grip around the dumbbell handle and lifts the dumbbell into the air at an angle so gravity makes it sit in the grip more securely. 
+
  
 ### Moving to the desired destination (numbered block) with the dumbbell
 
--  As I write this, the motion controls are not complete. If that changes, be sure to update the writeup accordingly!
- *~Kenneth*
+
+
+- After `pickup()` is completed,`to_origin()` is called. This moves the robot back into the origin position, since the coordinates of all the objects are relative to the starting position at the origin. The robot gets the angle between its position and the origin, calls `turn_to()` face the origin, and then moves in that direction until its displacement from the origin is within margin of error. Since the `laser_scan()` corrects the diretion of robot movement towards objects, the robot does not need to be exactly at the origin. 
+
+- Now that the robot is back at the origin, `self.db_to_b()` calls `move_to()` the angle of the desired block. This works the same way as moving the robot towards the dumbbbell, except now the `dist` that the robot stops in front of the block is euqal to .6 m so there is enough room for the dumbbell to be placed. 
     
 ### Putting the dumbbell back down at the desired destination
-- ...
+- Once the robot is oriented in front of the block, `self.db_to_b()` calls `drop()`. This lowers the arm of the robot and opens the grip to place the dumbbell down. Then the arm pulls backwards with the intent of not knocking the dumbbell down (this does not work consistently in this implementation.)
+
+- The robot calls `to_origin()` and moves back to the origin in preparation to move the next dumbbell. 
+
 ## Challenges (1 paragraph): Describe the challenges you faced and how you overcame them.
 One challenge we faced as a team was combining every aspect of the project into a single, cohesive sequence. originally, we attempted to run the vision processing and motion in separate nodes from separate scripts, `object_recognizer.py` and `motion.py` respectively. However, it turned out that we can’t run a node, shut it down, and then start another in the same script. To solve this, we had to combine both of our scripts into `perception_movement.py` (now `perception_movement_v2.py`), making  sure that all the objects were identified and located before attempts to move were made.
 

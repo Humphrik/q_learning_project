@@ -465,15 +465,15 @@ class PerceptionMovement(object):
         # depends on quadrants
         if (self.odom_pose.position.y > 0 and self.odom_pose.position.x > 0):
             thetarad = math.pi + angle
-            print(math.degrees(thetarad))
+
 
         elif (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
             thetarad = 2 * math.pi + angle
-            print(math.degrees(thetarad))
+
 
         elif (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
             thetarad = math.pi + angle
-            print(math.degrees(thetarad))
+
 
 
         # convert for turn to
@@ -489,14 +489,11 @@ class PerceptionMovement(object):
         print("turned back to origin")
 
         print(self.odom_pose.position)
-        print("moving back to origin...")
-
-        print(self.odom_pose.position)
         print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
         #  move to origin
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .5):
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .4):
             xvel = .2 * (displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
             self.pub.publish(Vector3(xvel, 0, 0), Vector3(0, 0, 0))
 
@@ -615,6 +612,7 @@ class PerceptionMovement(object):
 
         # after objects found, move to the target when an action is received
         if (self.finished and self.action_state):
+            print("action state")
             #lidar stuff goes here
             vel = Twist()
 
@@ -637,12 +635,12 @@ class PerceptionMovement(object):
                 elif (min(data.ranges[1:10]) < min(data.ranges[349:359])):
 
                     vel.angular.z = .08
-                    #print("Turning R")
+                    print("Turning R")
 
                 #smallest value is to the left, turn left
                 elif (min(data.ranges[1:10]) > min(data.ranges[349:359])):
                     vel.angular.z = -.08
-                    #print("Turning L")
+                    print("Turning L")
 
             if (min(frontranges) <= dist):
                 self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
