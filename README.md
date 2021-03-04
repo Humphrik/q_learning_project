@@ -268,10 +268,14 @@ These 3 gifs occurred in order during a single run of the algorithm.
 
 
 ![Q Matrix](qmatrix.gif)
+
+
 2) What the robot looks like as it processes visual data.
 
 
 ![Vision](vision.gif)
+
+
 3) An example of a dumbbell successfully place a dumbbell in front of the correct block, according to the Q-matrix.
 
 
