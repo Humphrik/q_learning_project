@@ -227,7 +227,6 @@ The implementation for robot manipulation and movement is in `perception_movemen
 
 
 ###Moving to the right spot in order to pick up a dumbbell
-
 -   Once the robot has recieved the desired dumbbell color and block number, the `self.get_action()` subscriber callback function gets their coordinates from the order and position arrays. Then, `self.get_action()` calls the function `self.db_to_b()`, which is the entire movement of getting the dumbbell and dropping it off at the block.
 
 -   `self.db_to_b()` calls `move_to()`. Within `move_to()`, the robot calls `turn_to()` the direction of the dumbbell angle. Then, `self.action_state` is set `True`. This allows the `self.laser_scan()` function to start moving the robot towards the dumbbell. Since the robot is likely not exactly facing the dumbbell dumbbel and may have some noise in its movement, the angular velocity is adjusted as it moves so that the closest object read by the lidar in front of the robot is in the direction of movement. The robot moves until the displacement between the robot and the dumbbell it is equal to `dist` for dumbbells, which is 0.15 m.`self.action_state` is set to `False`, so back in `self.db_to_b()`, the robot knows to start the picking up motion.
@@ -239,9 +238,6 @@ The implementation for robot manipulation and movement is in `perception_movemen
 
  
 ### Moving to the desired destination (numbered block) with the dumbbell
-
-
-
 - After `pickup()` is completed,`to_origin()` is called. This moves the robot back into the origin position, since the coordinates of all the objects are relative to the starting position at the origin. The robot gets the angle between its position and the origin, calls `turn_to()` face the origin, and then moves in that direction until its displacement from the origin is within margin of error. Since the `laser_scan()` corrects the diretion of robot movement towards objects, the robot does not need to be exactly at the origin. 
 
 - Now that the robot is back at the origin, `self.db_to_b()` calls `move_to()` the angle of the desired block. This works the same way as moving the robot towards the dumbbbell, except now the `dist` that the robot stops in front of the block is euqal to .6 m so there is enough room for the dumbbell to be placed. 
