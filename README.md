@@ -265,10 +265,16 @@ Maneuvering the robot forward so that the open grip of the arm goes precisely ar
 Gifs of Behaviour
 These 3 gifs occurred in order during a single run of the algorithm.
 1) An excerpt of the q_matrix script as it runs.
+
+
 ![Q Matrix](qmatrix.gif)
 2) What the robot looks like as it processes visual data.
+
+
 ![Vision](vision.gif)
 3) An example of a dumbbell successfully place a dumbbell in front of the correct block, according to the Q-matrix.
+
+
 ![motion](motion.gif)
 
 
