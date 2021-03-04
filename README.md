@@ -226,7 +226,7 @@ for i in range(0, 3):
 The implementation for robot manipulation and movement is in `perception_movement_v2.py`. We run after the world is initialized and when the world is rest.  Manipulation and movement occurs after all perception has been completed and the arrays of dumbbell order (`db_order`), dumbbell positions (`db_pos`), block order (`block_order`), and block positions (`block_pos`) have all been found. The order of the objects are stored from left to right and the positions are stored as radian coordinates. 
 
 
-###Moving to the right spot in order to pick up a dumbbell
+### Moving to the right spot in order to pick up a dumbbell
 -   Once the robot has recieved the desired dumbbell color and block number, the `self.get_action()` subscriber callback function gets their coordinates from the order and position arrays. Then, `self.get_action()` calls the function `self.db_to_b()`, which is the entire movement of getting the dumbbell and dropping it off at the block.
 
 -   `self.db_to_b()` calls `move_to()`. Within `move_to()`, the robot calls `turn_to()` the direction of the dumbbell angle. Then, `self.action_state` is set `True`. This allows the `self.laser_scan()` function to start moving the robot towards the dumbbell. Since the robot is likely not exactly facing the dumbbell dumbbel and may have some noise in its movement, the angular velocity is adjusted as it moves so that the closest object read by the lidar in front of the robot is in the direction of movement. The robot moves until the displacement between the robot and the dumbbell it is equal to `dist` for dumbbells, which is 0.15 m.`self.action_state` is set to `False`, so back in `self.db_to_b()`, the robot knows to start the picking up motion.
@@ -234,16 +234,16 @@ The implementation for robot manipulation and movement is in `perception_movemen
 ### Picking up the dumbbell
 -   The function `arm_default()`, sets the arm into a position for when it moves to grab the dumbbell. The robot is intialized into this position. `arm_open()` opens the grip and `arm_close()` closes the grip. 
 
-- Once the robot is oriented in front of the dumbbell, `self.db_to_b()` calls `pickup()`. This closes the grip around the dumbbell handle and lifts the dumbbell into the air at an angle so gravity makes it sit in the grip more securely. 
+- Once the robot is oriented in front of the dumbbell, `db_to_b()` calls `pickup()`. This closes the grip around the dumbbell handle and lifts the dumbbell into the air at an angle so gravity makes it sit in the grip more securely. 
 
  
 ### Moving to the desired destination (numbered block) with the dumbbell
 - After `pickup()` is completed,`to_origin()` is called. This moves the robot back into the origin position, since the coordinates of all the objects are relative to the starting position at the origin. The robot gets the angle between its position and the origin, calls `turn_to()` face the origin, and then moves in that direction until its displacement from the origin is within margin of error. Since the `laser_scan()` corrects the diretion of robot movement towards objects, the robot does not need to be exactly at the origin. 
 
-- Now that the robot is back at the origin, `self.db_to_b()` calls `move_to()` the angle of the desired block. This works the same way as moving the robot towards the dumbbbell, except now the `dist` that the robot stops in front of the block is euqal to .6 m so there is enough room for the dumbbell to be placed. 
+- Now that the robot is back at the origin, `db_to_b()` calls `move_to()` the angle of the desired block. This works the same way as moving the robot towards the dumbbbell, except now the `dist` that the robot stops in front of the block is euqal to .6 m so there is enough room for the dumbbell to be placed. 
     
 ### Putting the dumbbell back down at the desired destination
-- Once the robot is oriented in front of the block, `self.db_to_b()` calls `drop()`. This lowers the arm of the robot and opens the grip to place the dumbbell down. Then the arm pulls backwards with the intent of not knocking the dumbbell down (this does not work consistently in this implementation.)
+- Once the robot is oriented in front of the block, `db_to_b()` calls `drop()`. This lowers the arm of the robot and opens the grip to place the dumbbell down. Then the arm pulls backwards with the intent of not knocking the dumbbell down (this does not work consistently in this implementation.)
 
 - The robot calls `to_origin()` and moves back to the origin in preparation to move the next dumbbell. 
 
@@ -253,14 +253,14 @@ One challenge we faced as a team was combining every aspect of the project into 
 Another challenge we faced was finding the optimal convergence condition that balanced correctness with computation time. Ultimately, we discovered that the algorithm would take 300-500 iterations to begin reliably returning an optimal path. For us, this meant counting every time the Q-learning algorithm failed to make a significant change in the matrix for an iteration. If this occurred for 30 iteration in a row, the matrix is considered converged.
 
 ## Future Work
-For the future, we hope to implement a more robust system for picking up and delivering the dumbbells to the cubes.  Unfortunately, that goal of the project could not be achieved in the time alotted. Furthermore, we would also seek to speed up the performance of both scripts in terms of computation time. Currently, the q_matrix takes over 5 minutes to converge, the vision processing takes over a minute, and motion takes an undetermined amount of time. Such time constraints made it difficult to perform full tests on the algorithm.
+For the future, we hope to implement a more robust system for picking up and delivering the dumbbells to the cubes. Unfortunately, that goal of the project could not be completely achieved in the time alotted. While the robot can bring all three dumbbells to blocks one after the other sometimes, it is not always successful and the movements are slow. To improve upon this implementation, we would increase the accuracy of navigating to the origin by adjusting angular velocity, or alternatively, detect and move towards objects without relying on coordinates relative to the origin. We would also implement both clockwise and counterclockwise movement in `turn_to()`. Furthermore, we would also seek to speed up the performance of both scripts in terms of computation time. Currently, the q_matrix takes over 5 minutes to converge, the vision processing takes over a minute, and motion takes an undetermined amount of time. Such time constraints made it difficult to perform full tests on the algorithm.
 
 
 Maneuvering the robot forward so that the open grip of the arm goes precisely around the dumbbell handle. It wasn’t precise enough with our original odometry method, so proportional control with the Lidar was also utilized.
 
 ## Takeaways (at least 2 bullet points with 2-3 sentences per bullet point): What are your key takeaways from this project that would help you/others in future robot programming assignments working in pairs? For each takeaway, provide a few sentences of elaboration.
 
-- *Kailin*: One takeaway I had was to write test scripts for part and debugging those before combining it with other pieces of code. After I combined the object recognizing and motion scripts, I wasted time by waiting for the object recognition to complete every single time I ran the code to debug motion.
+- *Kailin*: The key takeway I have from this project is the importance of finding an effective workflow to deal with many moving parts. For example, after I combined the object recognizing and movement scripts, I spent too much waiting for the object recognition to complete every single time I ran the code to debug motion. I then had to find which parts to comment out to debug motion more efficiently. Similarly, I stumbled in my process for resetting Gazebo and running all the terminals every time I needed to test code; I would have saved time if I figured this out earlier on.
 - *Kenneth*: My main takeaway from this project was the fact that a seemingly trivial task for humans requires many individual parts working in harmony for a robot to complete. Ultimately, the careful cooperation between various techniques and functionalities is necessary to complete any complex task for a robot.
 
 Gifs of Behaviour
