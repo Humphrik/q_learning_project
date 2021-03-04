@@ -276,7 +276,7 @@ These 3 gifs occurred in order during a single run of the algorithm.
 ![Vision](vision.gif)
 
 
-3) An example of a dumbbell successfully place a dumbbell in front of the correct block, according to the Q-matrix.
+3) An example of the robot successfully placing a dumbbell in front of the correct block, according to the Q-matrix ("green", 1).
 
 
 ![motion](motion.gif)
