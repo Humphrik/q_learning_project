@@ -161,6 +161,7 @@ class PerceptionMovement(object):
 # entire moving dumbbell to block command
     def db_to_b(self):
 
+        self.arm_default()
         db_r = self.goal_db_pose[1]
         db_theta = self.goal_db_pose[0]
         self.to_db = True
@@ -455,25 +456,63 @@ class PerceptionMovement(object):
         angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
         print(math.degrees(angle))
 
+        thetarad = angle
 
         # depends on quadrants
         if (self.odom_pose.position.y > 0 and self.odom_pose.position.x > 0):
             thetarad = math.pi + angle
+            print(math.degrees(thetarad))
 
-        if (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
+        elif (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
             thetarad = 2 * math.pi + angle
+            print(math.degrees(thetarad))
 
-        if (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
+        elif (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
             thetarad = math.pi + angle
+            print(math.degrees(thetarad))
 
         # convert for turn to
         if (thetarad > math.pi):
-            thetarad = 2*math.pi - thetarad
+            thetarad = - (2*math.pi - thetarad)
 
         elif (thetarad < math.pi):
-            thetarad = - thetarad
+            thetarad = thetarad
 
-        self.turn_to(-thetarad)
+        print(math.degrees(thetarad))
+        self.turn_to(thetarad)
+
+        print("turn again for more precision")
+
+        rospy.sleep(.1)
+
+        angle = math.atan(self.odom_pose.position.y/self.odom_pose.position.x)
+        print(math.degrees(angle))
+
+        thetarad = angle
+
+        # depends on quadrants
+        if (self.odom_pose.position.y > 0 and self.odom_pose.position.x > 0):
+            thetarad = math.pi + angle
+            print(math.degrees(thetarad))
+
+        elif (self.odom_pose.position.y > 0 and self.odom_pose.position.x < 0):
+            thetarad = 2 * math.pi + angle
+            print(math.degrees(thetarad))
+
+        elif (self.odom_pose.position.y < 0 and self.odom_pose.position.x > 0):
+            thetarad = math.pi + angle
+            print(math.degrees(thetarad))
+
+        # convert for turn to
+        if (thetarad > math.pi):
+            thetarad = - (2*math.pi - thetarad)
+
+        elif (thetarad < math.pi):
+            thetarad = thetarad
+
+        print(math.degrees(thetarad))
+        self.turn_to(thetarad)
+
         print("turned back to origin")
 
         print(self.odom_pose.position)
@@ -482,15 +521,20 @@ class PerceptionMovement(object):
         print(self.odom_pose.position)
         print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
 
+
         while ((displacement(0, 0,
-            self.odom_pose.position.x, self.odom_pose.position.y)) > .08):
-            self.pub.publish(Vector3(.3, 0, 0), Vector3(0, 0, 0))
+            self.odom_pose.position.x, self.odom_pose.position.y)) > .1):
+
+            xvel = .3 * (displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
+            self.pub.publish(Vector3(xvel, 0, 0), Vector3(0, 0, 0))
+
+
             #print(displacement(0, 0,self.odom_pose.position.x, self.odom_pose.position.y))
          # stop the robot
         self.pub.publish(Vector3(0, 0, 0), Vector3(0, 0, 0))
 
 
-        self.turn_to(0)
+        #self.turn_to(0)
         print("back to origin")
 
 
@@ -607,7 +651,7 @@ class PerceptionMovement(object):
 
             if (self.to_db):
 
-                dist = 0.14
+                dist = 0.15
             else:
                 dist = .50
 
